@@ -48,14 +48,24 @@ JumpSoundTimer = 0
 # Sprite data
 
 #PlayerSpr = bytearray([0x04 ^ 0xFF, 0x08 ^ 0xFF, 0xC8 ^ 0xFF, 0xBC ^ 0xFF, 0x1C ^ 0xFF, 0x0E ^ 0xFF, 0x1A ^ 0xFF, 0x2C ^ 0xFF])
-# BITMAP: width: 12, height: 12
-PlayerRunFrame1 = bytearray([191,127,255,255,255,255,191,31,95,31,63,191,
-           7,11,8,4,12,8,8,0,8,7,15,15])
-# BITMAP: width: 12, height: 12
-PlayerRunFrame2 = bytearray([255,63,255,255,255,255,191,31,95,31,63,191,
-           15,15,0,4,12,8,8,8,0,7,15,15])
 #PlayerRunFrame1 = bytearray([0xFF, 0xFF, 0xFF, 0xFD, 0xF9, 0xBB, 0xBB, 0xD3, 0xE1, 0xF1, 0xC1, 0xB3, 0x61, 0xD5, 0xF3, 0xFF])
 #PlayerRunFrame2 = bytearray([0xFF, 0xFF, 0xF7, 0xFB, 0xFB, 0xFB, 0x3B, 0x93, 0xE3, 0x71, 0x03, 0xE7, 0xC3, 0xAB, 0xE7, 0xFF])
+
+PlayerRunFrame1 = bytearray([239,223,63,127,127,127,127,127,127,127,95,31,47,143,159,223,
+           15,1,12,8,4,12,12,12,12,12,0,12,8,7,15,15])
+PlayerRunFrame2 = bytearray([255,255,15,127,127,127,127,127,127,127,95,31,47,143,159,223,
+           15,15,0,4,12,12,12,12,12,12,12,0,4,15,15,15])
+           
+# BITMAP: width: 16, height: 8
+PlayerRunFrame1 = bytearray([254,253,131,231,231,231,199,199,199,199,133,241,242,248,249,253])
+# BITMAP: width: 16, height: 8
+PlayerRunFrame2 = bytearray([255,191,192,167,231,231,199,199,199,135,197,177,242,248,249,253])
+
+ # BITMAP: width: 16, height: 8
+SuperTitoFrame1 = bytearray([227,221,170,182,170,221,227,199,198,134,192,176,242,248,249,253])
+# BITMAP: width: 16, height: 8
+SuperTitoFrame2 = bytearray([227,213,182,128,182,213,227,199,197,198,128,240,242,248,249,253])
+           
 CactusSpr1 = bytearray([0x00 ^ 0xFF, 0xFC ^ 0xFF, 0x86 ^ 0xFF, 0x92 ^ 0xFF, 0xC2 ^ 0xFF, 0xFC ^ 0xFF, 0x00 ^ 0xFF, 0x00 ^ 0xFF])
 CactusSpr2 = bytearray([0x00 ^ 0xFF, 0x1E ^ 0xFF, 0x10 ^ 0xFF, 0xFE ^ 0xFF, 0xE4 ^ 0xFF, 0x20 ^ 0xFF, 0x78 ^ 0xFF, 0x00 ^ 0xFF])
 CloudSpr = bytearray([0x9F, 0x4F, 0x63, 0x59, 0xBD, 0x73, 0x73, 0x65, 0x5C, 0x7E, 0x7E, 0x51, 0x57, 0x4F, 0x1F, 0xBF])
@@ -100,6 +110,8 @@ while(thumby.buttonA.pressed() == True or thumby.buttonB.pressed() == True):
     pass
 
 while(GameRunning):
+    SuperTito = False
+    Tito = True
     t0 = time.ticks_us() # Check the time
 
     # Is the player on the ground and trying to jump?
@@ -108,7 +120,7 @@ while(GameRunning):
     if((thumby.buttonA.pressed() == True or thumby.buttonB.pressed() == True) and YPos == 0.0):
         # Jump!
         JumpSoundTimer = 200
-        YVel = -2.5
+        YVel = -2.0
 
     # Handle "dynamics"
     YPos += YVel
@@ -130,7 +142,7 @@ while(GameRunning):
         YVel = 0.0
 
     # Has the player hit a cactus?
-    if(CactusPos < 8 and CactusPos > -8 and YPos > -8):
+    if(CactusPos < 4 and CactusPos > -4 and YPos > -6):
         # Stop the game and give a prompt
         GameRunning = False
         thumby.display.fill(1)
@@ -194,12 +206,23 @@ while(GameRunning):
     thumby.display.blit(CactusSpr, int(16 + CactusPos), 24, 8, 8, 1, 0, 0)
     thumby.display.blit(CloudSpr, int(16 + CloudPos), 8, 16, 8, 1, 0, 0)
 
-    if(t0 % 250000 < 125000 or YPos != 0.0):
+    # Regular Tito animation
+    if (Tito):
+        if(t0 % 250000 < 125000 or YPos != 0.0):
         # Player is in first frame of run animation
-        thumby.display.blit(PlayerRunFrame1, 8, int(23 + YPos), 16, 8, 1, 0, 0)
-    else:
-        # Player is in second frame of run animation
-        thumby.display.blit(PlayerRunFrame2, 8, int(24 + YPos), 16, 8, 1, 0, 0)
+            thumby.display.blit(PlayerRunFrame1, 8, int(23 + YPos), 16, 8, 1, 0, 0)
+        else:
+            # Player is in second frame of run animation
+            thumby.display.blit(PlayerRunFrame2, 8, int(24 + YPos), 16, 8, 1, 0, 0)
+    
+    # Super Tito animation    
+    if (SuperTito):
+        if(t0 % 250000 < 125000 or YPos != 0.0):
+            # Player is in first frame of run animation
+            thumby.display.blit(SuperTitoFrame1, 8, int(23 + YPos), 16, 8, 1, 0, 0)
+        else:
+            # Player is in second frame of run animation
+            thumby.display.blit(SuperTitoFrame2, 8, int(24 + YPos), 16, 8, 1, 0, 0)
 
     thumby.display.drawFilledRectangle(0, 31, thumby.display.width, 9, 0) # Ground
     thumby.display.drawText(str(int(Points)), 0, 0, 0) # Current points
