@@ -20,7 +20,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
-
+import machine
 import thumby
 import time
 import random
@@ -42,10 +42,9 @@ MaxFPS = 60
 Points = 0
 GameRunning = True
 SpritePos = random.randint(72, 300)
-#CactusPos = random.randint(72, 300)
-#StarPos = random.randint(72,300)
 CloudPos = random.randint(60, 200)
 JumpSoundTimer = 0
+SuperTito = False
 
 # Sprite data
 
@@ -61,12 +60,14 @@ SuperTitoFrame2 = bytearray([227,213,182,128,182,213,227,199,197,198,128,240,242
            
 CactusSpr1 = bytearray([255,3,121,29,61,3,255,255])
 CactusSpr2 = bytearray([255,227,239,0,0,223,199,255])
-
-CloudSpr = bytearray([0x9F, 0x4F, 0x63, 0x59, 0xBD, 0x73, 0x73, 0x65, 0x5C, 0x7E, 0x7E, 0x51, 0x57, 0x4F, 0x1F, 0xBF])
 StarSpr = bytearray([223,175,111,239,115,221,254,221,115,239,111,175,223,
            247,233,238,247,247,242,242,242,247,247,238,233,247])
+
+CloudSpr = bytearray([0x9F, 0x4F, 0x63, 0x59, 0xBD, 0x73, 0x73, 0x65, 0x5C, 0x7E, 0x7E, 0x51, 0x57, 0x4F, 0x1F, 0xBF])
+
 CactusSpr = CactusSpr1
 SpawnSprite = CactusSpr
+
 
 thumby.display.fill(0)
 thumby.display.drawText("RUN TITO,", 12, 0, 1)
@@ -105,8 +106,8 @@ while(thumby.buttonA.pressed() == True or thumby.buttonB.pressed() == True):
     thumby.display.update()
     pass
 
+
 while(GameRunning):
-    SuperTito = False
     
     t0 = time.ticks_us() # Check the time
 
@@ -132,51 +133,63 @@ while(GameRunning):
     # Accelerate the player just a little bit
     XVel += 0.000025
 
-    # Make sure we haven't fallen below the groundW
+    # Make sure we haven't fallen below the ground
     if(YPos > 0):
         YPos = 0.0
         YVel = 0.0
 
+    
    # Has the player hit a cactus?
-    if(SpritePos < 5 and SpritePos > -6 and YPos > -6):
+    if(SpritePos < 5 and SpritePos > -5 and YPos > -6 ):
+        
+        if (SuperTito == True and SpawnSprite != StarSpr):
+            SuperTito = False
+        
+        if (SpawnSprite == StarSpr):
+            SuperTito = True
+            
+        if (SuperTito != True):
         # Stop the game and give a prompt
-        GameRunning = False
-        thumby.display.fill(1)
-        thumby.audio.stop()
-        thumby.display.drawText("Dammit Tito!", 1, 1, 0)
-        thumby.display.drawText(str(int(Distance))+"m", 26, 9, 0)
-        high = -1
-        if(thumby.saveData.hasItem("highscore")):
-            high = int(thumby.saveData.getItem("highscore"))
-            thumby.display.drawText("High: " + str(high)+"m", 8, 17, 0)
-        if(Distance > high):
-            thumby.saveData.setItem("highscore", Distance)
-            thumby.saveData.save()
-        thumby.display.drawText("Again?", 19, 25, 0)
-        thumby.display.drawText("A:Y B:N", 16, 33, 0) 
-        thumby.display.update()
-        thumby.audio.playBlocking(300, 250)
-        thumby.audio.play(260, 250)
+            GameRunning = False
+            thumby.display.fill(1)
+            thumby.audio.stop()
+            thumby.display.drawText("Dammit Tito!", 1, 1, 0)
+            thumby.display.drawText(str(int(Distance))+"m", 26, 9, 0)
+            high = -1
+            if(thumby.saveData.hasItem("highscore")):
+                high = int(thumby.saveData.getItem("highscore"))
+                thumby.display.drawText("High: " + str(high)+"m", 8, 17, 0)
+            if(Distance > high):
+                thumby.saveData.setItem("highscore", Distance)
+                thumby.saveData.save()
+            thumby.display.drawText("Again?", 19, 25, 0)
+            thumby.display.drawText("A:Y B:N", 16, 33, 0) 
+            thumby.display.update()
+            thumby.audio.playBlocking(300, 250)
+            thumby.audio.play(260, 250)
+        
+            while(thumby.inputPressed() == False):
+                pass # Wait for the user to give us something
+        
+            while(GameRunning == False):
+                if(thumby.buttonA.pressed() == True == 1):
+                    # Restart the game
+                    XVel = 0.05
+                    YVel = 0
+                    Distance = 0
+                    YPos = 0
+                    Points = 0
+                    GameRunning = True
+                    SpritePos = random.randint(72, 300)
+                    CloudPos = random.randint(60, 200)
+                elif(thumby.buttonB.pressed() == True):
+                    # Quit
+                    machine.reset()
+            else: 
+                pass
+    
 
-        while(thumby.inputPressed() == False):
-            pass # Wait for the user to give us something
-
-        while(GameRunning == False):
-            if(thumby.buttonA.pressed() == True == 1):
-                # Restart the game
-                XVel = 0.05
-                YVel = 0
-                Distance = 0
-                YPos = 0
-                Points = 0
-                GameRunning = True
-                SpritePos = random.randint(72, 300)
-                CloudPos = random.randint(60, 200)
-
-            elif(thumby.buttonB.pressed() == True):
-                # Quit
-                machine.reset()
-                
+            
     # Is the cactus out of view?
     if(SpritePos < -24):
         # "spawn" another one (Set its position some distance ahead and change the sprite)
@@ -184,7 +197,7 @@ while(GameRunning):
         thumby.audio.play(440, 300)
         SpritePos = random.randint(72, 500)
         # spawn selector
-        if (random.random() <.91):
+        if (random.random() <.5):
             SpawnSprite = CactusSpr
         else:
             SpawnSprite = StarSpr
