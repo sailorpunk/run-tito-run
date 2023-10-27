@@ -28,7 +28,11 @@ superJump = -2.5
 jump = -2.0
 point = 10
 superPoint = 20
+lastSpawn = 1
 
+def superAudio():
+    thumby.audio.play(350,50)
+    thumby.audio.play(450,50)
     
 # Sprite data
 
@@ -169,8 +173,8 @@ while(GameRunning):
         
         elif (SpawnSprite == StarSpr):
             SuperTito = True
+            superAudio()
             
-      
     # Is the cactus out of view?
     if (SpritePos < -24):
         # "spawn" another one (Set its position some distance ahead and change the sprite)
@@ -183,20 +187,19 @@ while(GameRunning):
       
         # spawn selector
         random.seed(time.ticks_ms())
-        lastSpawn = None
         if (SpawnSprite == CactusSpr and random.randint(0, 1) == 0):
             CactusSpr = CactusSpr1
-            lastSpawn = CactusSpr
+            lastSpawn = 0
         else:
             CactusSpr = CactusSpr2
-            lastSpawn = CactusSpr
-            
-        if (random.random() <= .85 or lastSpawn == StarSpr):
+            lastSpawn = 0
+        if (random.random() <= .8 or lastSpawn == 1):
             SpawnSprite = CactusSpr
+            lastSpawn = 0
         else:
             SpawnSprite = StarSpr
-            lastSpawn = StarSpr
-        
+            lastSpawn = 1
+
             
     # Is the cloud out of view?
     if (CloudPos < -32):
