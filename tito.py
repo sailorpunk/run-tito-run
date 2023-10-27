@@ -1,25 +1,3 @@
-# Tinysaur Run.
-
-# Enter the mindset of a high-velocity reptile in a less-than-temperate
-# environment for as long as possible.
-
-# Written by Mason Watmough for TinyCircuits.
-# Last edited 09/09/2021
-
-'''
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-'''
 import machine
 import thumby
 import time
@@ -32,8 +10,8 @@ freq(125_000_000)
 gc.enable() # This line helps make sure we don't run out of memory
 
 # Sensitive game parameters
-
 XVel = 0.05
+SuperVel = XVel * 2
 YVel = 0
 Distance = 0
 YPos = 0
@@ -45,37 +23,35 @@ SpritePos = random.randint(72, 300)
 CloudPos = random.randint(60, 200)
 JumpSoundTimer = 0
 SuperTito = False
-
+frameCount = 0
+superJump = -2.5
+jump = -2.0
+point = 10
+superPoint = 20
+if (SuperTito):
+    SuperVel
+    
 # Sprite data
 
 # BITMAP: width: 16, height: 8
 PlayerRunFrame1 = bytearray([254,253,131,231,231,231,199,199,199,199,133,241,242,248,249,253])
-# BITMAP: width: 16, height: 8
 PlayerRunFrame2 = bytearray([255,191,192,167,231,231,199,199,199,135,197,177,242,248,249,253])
-
- # BITMAP: width: 16, height: 8
 SuperTitoFrame1 = bytearray([227,221,170,182,170,221,227,199,198,134,192,176,242,248,249,253])
-# BITMAP: width: 16, height: 8
 SuperTitoFrame2 = bytearray([227,213,182,128,182,213,227,199,197,198,128,240,242,248,249,253])
            
 CactusSpr1 = bytearray([255,3,121,29,61,3,255,255])
 CactusSpr2 = bytearray([255,227,239,0,0,223,199,255])
 StarSpr = bytearray([223,175,111,239,115,221,254,221,115,239,111,175,223,
            247,233,238,247,247,242,242,242,247,247,238,233,247])
-
 CloudSpr = bytearray([0x9F, 0x4F, 0x63, 0x59, 0xBD, 0x73, 0x73, 0x65, 0x5C, 0x7E, 0x7E, 0x51, 0x57, 0x4F, 0x1F, 0xBF])
-
 CactusSpr = CactusSpr1
 SpawnSprite = CactusSpr
-
 
 thumby.display.fill(0)
 thumby.display.drawText("RUN TITO,", 12, 0, 1)
 thumby.display.drawText("  RUN!", 15, 9, 1)
 thumby.display.update()
-
 thumby.display.setFPS(60)
-
 thumby.saveData.setName("RUN TITO RUN")
 
 while(thumby.buttonA.pressed() == True or thumby.buttonB.pressed() == True):
@@ -105,19 +81,21 @@ while(thumby.buttonA.pressed() == True or thumby.buttonB.pressed() == True):
         thumby.display.drawText("Press A/B", 9, 32, 0)
     thumby.display.update()
     pass
-
-
+        
+        
 while(GameRunning):
-    
     t0 = time.ticks_us() # Check the time
-
+    
     # Is the player on the ground and trying to jump?
     if(JumpSoundTimer < 0):
         JumpSoundTimer = 0
     if((thumby.buttonA.pressed() == True or thumby.buttonB.pressed() == True) and YPos == 0.0):
         # Jump!
         JumpSoundTimer = 200
-        YVel = -2.0
+        if (SuperTito):
+            YVel = superJump
+        else:
+            YVel = jump
 
     # Handle "dynamics"
     YPos += YVel
@@ -131,35 +109,38 @@ while(GameRunning):
         thumby.audio.stop()
 
     # Accelerate the player just a little bit
-    XVel += 0.000025
-
+    if (SuperTito):
+        XVel += 0.00003
+    else: XVel += 0.000025
+    
     # Make sure we haven't fallen below the ground
-    if(YPos > 0):
+    if (YPos > 0):
         YPos = 0.0
         YVel = 0.0
-
     
-   # Has the player hit a cactus?
-    if(SpritePos < 5 and SpritePos > -5 and YPos > -6 ):
-        
-        if (SuperTito == True and SpawnSprite != StarSpr):
-            SuperTito = False
-        
-        if (SpawnSprite == StarSpr):
-            SuperTito = True
-            
-        if (SuperTito != True):
-        # Stop the game and give a prompt
+    # Has the player hit a cactus?
+    collision = SpritePos < 5 and SpritePos > -5 and YPos > -6
+    
+    if (not collision):
+        frameCount = 0
+
+    elif (collision):
+        if (SuperTito and SpawnSprite == CactusSpr):
+            frameCount = 1
+            if (frameCount == 1):
+                SuperTito = False
+
+        elif (SpawnSprite == CactusSpr and frameCount == 0):
             GameRunning = False
             thumby.display.fill(1)
             thumby.audio.stop()
             thumby.display.drawText("Dammit Tito!", 1, 1, 0)
             thumby.display.drawText(str(int(Distance))+"m", 26, 9, 0)
             high = -1
-            if(thumby.saveData.hasItem("highscore")):
+            if (thumby.saveData.hasItem("highscore")):
                 high = int(thumby.saveData.getItem("highscore"))
                 thumby.display.drawText("High: " + str(high)+"m", 8, 17, 0)
-            if(Distance > high):
+            if (Distance > high):
                 thumby.saveData.setItem("highscore", Distance)
                 thumby.saveData.save()
             thumby.display.drawText("Again?", 19, 25, 0)
@@ -167,12 +148,12 @@ while(GameRunning):
             thumby.display.update()
             thumby.audio.playBlocking(300, 250)
             thumby.audio.play(260, 250)
-        
-            while(thumby.inputPressed() == False):
+            
+            while (thumby.inputPressed() == False):
                 pass # Wait for the user to give us something
         
-            while(GameRunning == False):
-                if(thumby.buttonA.pressed() == True == 1):
+            while (GameRunning == False):
+                if (thumby.buttonA.pressed() == True == 1):
                     # Restart the game
                     XVel = 0.05
                     YVel = 0
@@ -182,33 +163,39 @@ while(GameRunning):
                     GameRunning = True
                     SpritePos = random.randint(72, 300)
                     CloudPos = random.randint(60, 200)
-                elif(thumby.buttonB.pressed() == True):
+                elif (thumby.buttonB.pressed() == True):
                     # Quit
                     machine.reset()
             else: 
                 pass
-    
-
+        
+        elif (SpawnSprite == StarSpr):
+            SuperTito = True
             
+      
     # Is the cactus out of view?
-    if(SpritePos < -24):
+    if (SpritePos < -24):
         # "spawn" another one (Set its position some distance ahead and change the sprite)
-        Points += 10
+        if (SuperTito):
+            Points += superPoint
+        else: 
+            Points += point
         thumby.audio.play(440, 300)
         SpritePos = random.randint(72, 500)
+      
         # spawn selector
-        if (random.random() <.5):
+        if (random.random() <.8):
             SpawnSprite = CactusSpr
         else:
             SpawnSprite = StarSpr
         
-        if(SpawnSprite == CactusSpr and random.randint(0, 1) == 0):
+        if (SpawnSprite == CactusSpr and random.randint(0, 1) == 0):
             CactusSpr = CactusSpr1
         else:
             CactusSpr = CactusSpr2
             
     # Is the cloud out of view?
-    if(CloudPos < -32):
+    if (CloudPos < -32):
         # "spawn" another one
         CloudPos = random.randint(40, 200)
 
@@ -227,7 +214,7 @@ while(GameRunning):
 
     # Regular Tito animation
     if (not SuperTito):
-        if(t0 % 250000 < 125000 or YPos != 0.0):
+        if (t0 % 250000 < 125000 or YPos != 0.0):
         # Player is in first frame of run animation
             thumby.display.blit(PlayerRunFrame1, 8, int(23 + YPos), 16, 8, 1, 0, 0)
         else:
@@ -236,7 +223,7 @@ while(GameRunning):
     
     # Super Tito animation    
     if (SuperTito):
-        if(t0 % 250000 < 125000 or YPos != 0.0):
+        if (t0 % 250000 < 125000 or YPos != 0.0):
             # Player is in first frame of run animation
             thumby.display.blit(SuperTitoFrame1, 8, int(23 + YPos), 16, 8, 1, 0, 0)
         else:
@@ -251,5 +238,5 @@ while(GameRunning):
     thumby.display.update()
 
     # Spin wheels until we've used up one frame's worth of time
-    while(time.ticks_us() - t0 < 1000000.0 / MaxFPS):
+    while (time.ticks_us() - t0 < 1000000.0 / MaxFPS):
         pass
